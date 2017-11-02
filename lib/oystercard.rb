@@ -22,7 +22,7 @@ class Oystercard
     @entry_station = station
     @journey[[station.name, station.zone]] = nil
   end
-  
+
   def touch_out(station)
     deduct(MINIMUM_FARE)
     @exit_station = station
