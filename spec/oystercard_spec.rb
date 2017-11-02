@@ -1,54 +1,112 @@
 require 'oystercard'
 
 describe Oystercard do
-  subject(:card) { described_class.new }
-  let(:station) {
-    station = double(:station)
-    allow(station).to receive(:name).and_return('Oxford')
-    allow(station).to receive(:zone).and_return(4)
-    station
-  }
+
+  # other mocks
+  let(:station) { double(:station, name: 'Oxford', zone: 4) }
+  let(:journey) { double(:journey, entry: :Waterloo, out: :Euston) }
+
+  # oyster cards
+  let(:blank) { described_class.new }
+  let(:touched_out) { described_class.new(50) }
+  let(:touched_in) { described_class.new(50, entry: station) }
+
+  subject { blank }
 
   describe '#initialize' do
-    it 'check if oystercard has a balance equal to 0' do
-      expect(card.balance).to eq(0)
+    context 'when given no arguments' do
+      it 'has a balance equal to 0' do
+        expect(subject.balance).to eq(0)
+      end
+    end
+
+    context 'when given balance' do
+      subject { touched_in }
+
+      it 'has a balance equal to 50' do
+        expect(subject.balance).to eq(50)
+      end
+    end
+
+    it 'should have an empty list of journeys by default' do
+      expect(subject.journey_log).to eq Array.new
     end
   end
 
   describe '#top_up' do
-    it 'checking top-up' do
-      card.top_up(5)
-      expect(card.balance).to eq 5
+    subject { blank }
+
+    it 'top-ups balance by 5' do
+      subject.top_up(5)
+      expect(subject.balance).to eq 5
     end
 
     it 'raises and error when amount is above limit' do
       maximum_balance = Oystercard::CREDIT_LIMIT
-      card.top_up(maximum_balance)
-      expect { card.top_up(1) }.to raise_error RuntimeError
+      subject.top_up(maximum_balance)
+      expect { subject.top_up(1) }.to raise_error RuntimeError
     end
   end
 
-  describe '#journey status' do
-    it 'initial status not in journey' do
-      expect(card.in_journey?).to eq false
+  describe '#in_journey?' do
+    context 'when touched in' do
+      subject { touched_in }
+
+      it 'is in journey' do
+        expect(subject).to be_in_journey
+      end
     end
 
-    it 'changes status into "in_journey" after touch in' do
-      card.top_up(Oystercard::MINIMUM_BALANCE)
-      card.touch_in(station)
-      expect(card.in_journey?).to eq true
+    context 'when touched out' do
+      subject { touched_out }
+
+      it 'is not in journey' do
+        expect(subject).to_not be_in_journey
+      end
     end
   end
 
   describe '#touch in' do
-    it 'raises an error at touch in if minimum balance is less than 1' do
-      expect { card.touch_in(station) }.to raise_error RuntimeError
+
+    context 'when has credit less than minimum balance' do
+      subject { blank }
+
+      it 'raises error if minimum balance is less than 1' do
+        expect { subject.touch_in(station) }.to raise_error RuntimeError
+      end
     end
 
-    it 'remembers entry station on touch in' do
-      card.top_up(Oystercard::MINIMUM_BALANCE)
-      card.touch_in(station)
-      expect(card.entry_station).to eq station
+    context 'when has enough credit, and touched out' do
+      subject { touched_out }
+      before(:each) { subject.touch_in(station) }
+
+      it 'sets entry to passed station' do
+        expect(subject.entry).to eq station
+      end
+    end
+
+    context 'when starting a normal journey' do
+      subject { touched_out }
+
+      before(:each) do 
+        expect(subject).to_not receive(:log_journey).with(station, nil)
+      end
+
+      it 'doesn\'t attempt to log journey' do
+        subject.touch_in(station)
+      end
+    end
+
+    context 'when starting an abnormal journey' do
+      subject { touched_in }
+
+      before(:each) do 
+        expect(subject).to receive(:log_journey).with(station, nil)
+      end
+
+      it 'also attempts to log journey' do
+        subject.touch_in(station)
+      end
     end
   end
 
@@ -76,10 +134,7 @@ describe Oystercard do
     end
   end
 
-  describe '#list_of_journeys' do
-    it 'should have an empty list of journeys by default' do
-      expect(card.list_of_journeys).to eq([])
-    end
+  describe '#journey_log' do
 
     it 'should store a journey' do
       card.top_up(Oystercard::MINIMUM_BALANCE)
