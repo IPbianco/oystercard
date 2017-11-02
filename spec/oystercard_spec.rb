@@ -4,12 +4,15 @@ describe Oystercard do
 
   # other mocks
   let(:station) { double(:station, name: 'Oxford', zone: 4) }
-  let(:journey) { double(:journey, entry: :Waterloo, out: :Euston) }
+  let(:journey) { double(:journey, entry: :Waterloo, out: :Euston, fare: 1) }
+  let(:journey_class) { double(:journey_class, new: journey) }
 
   # oyster cards
   let(:blank) { described_class.new }
-  let(:touched_out) { described_class.new(50) }
-  let(:touched_in) { described_class.new(50, entry: station) }
+  let(:touched_out) { described_class.new(50, journey_class: journey_class) }
+  let(:touched_in) do
+    described_class.new(50, entry: station, journey_class: journey_class)
+  end
 
   subject { blank }
 
@@ -29,7 +32,7 @@ describe Oystercard do
     end
 
     it 'should have an empty list of journeys by default' do
-      expect(subject.journey_log).to eq Array.new
+      expect(subject.log).to eq Array.new
     end
   end
 
@@ -88,7 +91,7 @@ describe Oystercard do
     context 'when starting a normal journey' do
       subject { touched_out }
 
-      before(:each) do 
+      before(:each) do
         expect(subject).to_not receive(:log_journey).with(station, nil)
       end
 
@@ -100,7 +103,7 @@ describe Oystercard do
     context 'when starting an abnormal journey' do
       subject { touched_in }
 
-      before(:each) do 
+      before(:each) do
         expect(subject).to receive(:log_journey).with(station, nil)
       end
 
@@ -111,36 +114,49 @@ describe Oystercard do
   end
 
   describe '#touch out' do
-    it 'changes the balance by the minimum fare' do
-      card.top_up(20)
-      card.touch_in(station)
-      expect { card.touch_out(station) }.to change {
-        card.balance
-      }.by(-Oystercard::MINIMUM_FARE)
+    context 'when ending a journey' do
+      subject { touched_in }
+
+      before(:each) do
+        expect(subject).to receive(:log_journey).with(station, station)
+      end
+
+      it 'attempts to log journey' do
+        subject.touch_out(station)
+      end
+    end
+
+    context 'when ending an unusual journey' do
+      subject { touched_out }
+
+      before(:each) do
+        expect(subject).to receive(:log_journey).with(nil, station)
+      end
+
+      it 'attempts to log journey' do
+        subject.touch_out(station)
+      end
     end
 
     it 'makes entry station nil on touch out' do
-      card.top_up(Oystercard::MINIMUM_BALANCE)
-      card.touch_in(station)
-      card.touch_out(station)
-      expect(card.entry_station).to eq nil
-    end
-
-    it 'remembers exit station on touch out' do
-      card.top_up(Oystercard::MINIMUM_BALANCE)
-      card.touch_in(station)
-      card.touch_out(station)
-      expect(card.exit_station).to eq station
+      touched_in.touch_out(station)
+      expect(touched_in.entry).to eq nil
     end
   end
 
-  describe '#journey_log' do
+  describe '#log_journey' do
 
-    it 'should store a journey' do
-      card.top_up(Oystercard::MINIMUM_BALANCE)
-      card.touch_in(station)
-      card.touch_out(station)
-      expect(card.list_of_journeys).to eq([{ ['Oxford', 4] => ['Oxford', 4] }])
+    subject { touched_in }
+
+    it 'stores the journey in log' do
+      subject.touch_out(station)
+      expect(touched_in.log.last).to eq journey
     end
+
+    it 'deducts fare' do
+      expect { subject.touch_out(station) }
+        .to change { subject.balance }.by(-1)
+    end
+
   end
 end

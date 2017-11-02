@@ -1,20 +1,20 @@
 class Oystercard
-  attr_reader :balance, :limit, :entry, :journey_log, :exit_station
+  attr_reader :balance, :limit, :entry, :log
   CREDIT_LIMIT = 120
-  MINIMUM_BALANCE = 1
   MINIMUM_FARE = 1
+  PENALTY = 9
 
-  def initialize(balance = 0, limit: CREDIT_LIMIT, entry: nil)
+  def initialize(balance = 0, limit: CREDIT_LIMIT, entry: nil, journey_class: Journey)
     @balance = balance
     @limit = limit
     @entry = entry
-    @journey_log = []
-    @journey = {}
+    @log = []
+    @journey_class = journey_class
   end
 
   def top_up(amount)
     raise "amount above #{CREDIT_LIMIT}" if overloads?(amount)
-    @balance += amount
+    credit(amount)
   end
 
   def touch_in(entry_station)
@@ -23,12 +23,9 @@ class Oystercard
     @entry = entry_station
   end
 
-  def touch_out(station)
-    deduct(MINIMUM_FARE)
-    @exit_station = station
-    @journey[[@entry_station.name, @entry_station.zone]] = [station.name, station.zone]
-    @entry_station = nil
-    add_to_list
+  def touch_out(exit_station)
+    log_journey(entry, exit_station)
+    @entry = nil
   end
 
   def in_journey?
@@ -36,13 +33,17 @@ class Oystercard
   end
 
   def log_journey(entry_station, exit_station)
+    log << @journey_class.new(entry_station, exit_station)
+    deduct(log.last.fare(MINIMUM_FARE, PENALTY))
   end
 
   private
 
+  def credit(amount)
+    @balance += amount
+  end
+
   def deduct(fare)
-    message = 'Not enough money for the journey'
-    raise message if insufficient_money?(fare)
     @balance -= fare
   end
 
@@ -50,15 +51,7 @@ class Oystercard
     @balance + amount > CREDIT_LIMIT
   end
 
-  def insufficient_money?(fare)
-    @balance - fare < 0
-  end
-
   def insufficient_balance?
-    @balance < MINIMUM_BALANCE
-  end
-
-  def add_to_list
-    @list_of_journeys << @journey
+    @balance < MINIMUM_FARE
   end
 end
