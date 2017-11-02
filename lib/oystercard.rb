@@ -1,3 +1,5 @@
+require './lib/journeylog'
+
 class Oystercard
   attr_reader :balance, :limit, :entry, :log
   CREDIT_LIMIT = 120
@@ -7,7 +9,7 @@ class Oystercard
   def initialize(balance = 0, limit: CREDIT_LIMIT, log_class: JourneyLog)
     @balance = balance
     @limit = limit
-    @log = log_class.new
+    @log = log_class.new(MINIMUM_FARE, PENALTY)
   end
 
   def top_up(amount)
@@ -17,22 +19,11 @@ class Oystercard
 
   def touch_in(entry_station)
     raise 'insufficient funds' if insufficient_balance?
-    log_journey(entry, nil) unless entry.nil?
-    @entry = entry_station
+    deduct(log.start(entry_station))
   end
 
   def touch_out(exit_station)
-    log_journey(entry, exit_station)
-    @entry = nil
-  end
-
-  def in_journey?
-    !!@entry
-  end
-
-  def log_journey(entry_station, exit_station)
-    log << @journey_class.new(entry_station, exit_station)
-    deduct(log.last.fare(MINIMUM_FARE, PENALTY))
+    deduct(log.finish(exit_station))
   end
 
   private

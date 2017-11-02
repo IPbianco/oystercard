@@ -4,15 +4,12 @@ describe Oystercard do
 
   # other mocks
   let(:station) { double(:station, name: 'Oxford', zone: 4) }
-  let(:journey) { double(:journey, entry: :Waterloo, out: :Euston, fare: 1) }
-  let(:log_class) { double(:log_class) }
+  let(:log) { double(:log, start: 0, finish: 1) }
+  let(:log_class) { double(:log_class, new: log) }
 
   # oyster cards
-  let(:blank) { described_class.new }
-  let(:touched_out) { described_class.new(50, log_class: log_class) }
-  let(:touched_in) do
-    described_class.new(50, entry: station, log_class: log_class)
-  end
+  let(:blank) { described_class.new(log_class: log_class) }
+  let(:topped_up) { described_class.new(50, log_class: log_class) }
 
   subject { blank }
 
@@ -24,15 +21,15 @@ describe Oystercard do
     end
 
     context 'when given balance' do
-      subject { touched_in }
+      subject { topped_up }
 
       it 'has a balance equal to 50' do
         expect(subject.balance).to eq(50)
       end
     end
 
-    it 'should have an empty list of journeys by default' do
-      expect(subject.log).to eq
+    it 'should have log object' do
+      expect(subject.log).to eq log
     end
   end
 
@@ -51,26 +48,7 @@ describe Oystercard do
     end
   end
 
-  describe '#in_journey?' do
-    context 'when touched in' do
-      subject { touched_in }
-
-      it 'is in journey' do
-        expect(subject).to be_in_journey
-      end
-    end
-
-    context 'when touched out' do
-      subject { touched_out }
-
-      it 'is not in journey' do
-        expect(subject).to_not be_in_journey
-      end
-    end
-  end
-
   describe '#touch in' do
-
     context 'when has credit less than minimum balance' do
       subject { blank }
 
@@ -80,83 +58,33 @@ describe Oystercard do
     end
 
     context 'when has enough credit, and touched out' do
-      subject { touched_out }
-      before(:each) { subject.touch_in(station) }
+      subject { topped_up }
+      after(:each) { subject.touch_in(station) }
 
-      it 'sets entry to passed station' do
-        expect(subject.entry).to eq station
-      end
-    end
-
-    context 'when starting a normal journey' do
-      subject { touched_out }
-
-      before(:each) do
-        expect(subject).to_not receive(:log_journey).with(station, nil)
+      it 'sends station to log class' do
+        expect(subject.log).to receive(:start).with(station)
       end
 
-      it 'doesn\'t attempt to log journey' do
+      it 'changes balance by 0' do
         subject.touch_in(station)
-      end
-    end
-
-    context 'when starting an abnormal journey' do
-      subject { touched_in }
-
-      before(:each) do
-        expect(subject).to receive(:log_journey).with(station, nil)
-      end
-
-      it 'also attempts to log journey' do
-        subject.touch_in(station)
+        expect(subject.balance).to eq 50
       end
     end
   end
 
-  describe '#touch out' do
-    context 'when ending a journey' do
-      subject { touched_in }
+  describe '#touch in' do
+    context 'when has enough credit, and touched out' do
+      subject { topped_up }
+      after(:each) { subject.touch_out(station) }
 
-      before(:each) do
-        expect(subject).to receive(:log_journey).with(station, station)
+      it 'sends station to log class' do
+        expect(subject.log).to receive(:finish).with(station)
       end
 
-      it 'attempts to log journey' do
+      it 'changes balance by 1' do
         subject.touch_out(station)
+        expect(subject.balance).to eq 49
       end
     end
-
-    context 'when ending an unusual journey' do
-      subject { touched_out }
-
-      before(:each) do
-        expect(subject).to receive(:log_journey).with(nil, station)
-      end
-
-      it 'attempts to log journey' do
-        subject.touch_out(station)
-      end
-    end
-
-    it 'makes entry station nil on touch out' do
-      touched_in.touch_out(station)
-      expect(touched_in.entry).to eq nil
-    end
-  end
-
-  describe '#log_journey' do
-
-    subject { touched_in }
-
-    it 'stores the journey in log' do
-      subject.touch_out(station)
-      expect(touched_in.log.last).to eq journey
-    end
-
-    it 'deducts fare' do
-      expect { subject.touch_out(station) }
-        .to change { subject.balance }.by(-1)
-    end
-
   end
 end
