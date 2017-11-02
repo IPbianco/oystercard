@@ -1,7 +1,7 @@
 {
   "RSpec": {
     "coverage": {
-      "/Users/ipbianco/Projects/Makers/Week_2/Day_3/oystercard2/spec/journey_spec.rb": [
+      "/Users/theo/ma/week-2/oystercard2/spec/journey_spec.rb": [
         1,
         null,
         1,
@@ -33,7 +33,7 @@
         null,
         null
       ],
-      "/Users/ipbianco/Projects/Makers/Week_2/Day_3/oystercard2/lib/journey.rb": [
+      "/Users/theo/ma/week-2/oystercard2/lib/journey.rb": [
         1,
         1,
         null,
@@ -47,7 +47,17 @@
         null,
         null
       ],
-      "/Users/ipbianco/Projects/Makers/Week_2/Day_3/oystercard2/spec/oystercard_spec.rb": [
+      "/Users/theo/ma/week-2/oystercard2/spec/journeylog_spec.rb": [
+        1,
+        null,
+        1,
+        1,
+        0,
+        0,
+        null,
+        null
+      ],
+      "/Users/theo/ma/week-2/oystercard2/spec/oystercard_spec.rb": [
         1,
         null,
         1,
@@ -211,7 +221,7 @@
         null,
         null
       ],
-      "/Users/ipbianco/Projects/Makers/Week_2/Day_3/oystercard2/lib/oystercard.rb": [
+      "/Users/theo/ma/week-2/oystercard2/lib/oystercard.rb": [
         1,
         1,
         1,
@@ -270,7 +280,7 @@
         null,
         null
       ],
-      "/Users/ipbianco/Projects/Makers/Week_2/Day_3/oystercard2/spec/station_spec.rb": [
+      "/Users/theo/ma/week-2/oystercard2/spec/station_spec.rb": [
         1,
         null,
         1,
@@ -285,7 +295,7 @@
         null,
         null
       ],
-      "/Users/ipbianco/Projects/Makers/Week_2/Day_3/oystercard2/lib/station.rb": [
+      "/Users/theo/ma/week-2/oystercard2/lib/station.rb": [
         1,
         1,
         null,
@@ -296,6 +306,6 @@
         null
       ]
     },
-    "timestamp": 1509624734
+    "timestamp": 1509628481
   }
 }
