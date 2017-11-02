@@ -4,12 +4,10 @@ class Oystercard
   MINIMUM_FARE = 1
   PENALTY = 9
 
-  def initialize(balance = 0, limit: CREDIT_LIMIT, entry: nil, journey_class: Journey)
+  def initialize(balance = 0, limit: CREDIT_LIMIT, log_class: JourneyLog)
     @balance = balance
     @limit = limit
-    @entry = entry
-    @log = []
-    @journey_class = journey_class
+    @log = log_class.new
   end
 
   def top_up(amount)

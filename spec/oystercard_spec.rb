@@ -5,13 +5,13 @@ describe Oystercard do
   # other mocks
   let(:station) { double(:station, name: 'Oxford', zone: 4) }
   let(:journey) { double(:journey, entry: :Waterloo, out: :Euston, fare: 1) }
-  let(:journey_class) { double(:journey_class, new: journey) }
+  let(:log_class) { double(:log_class) }
 
   # oyster cards
   let(:blank) { described_class.new }
-  let(:touched_out) { described_class.new(50, journey_class: journey_class) }
+  let(:touched_out) { described_class.new(50, log_class: log_class) }
   let(:touched_in) do
-    described_class.new(50, entry: station, journey_class: journey_class)
+    described_class.new(50, entry: station, log_class: log_class)
   end
 
   subject { blank }
@@ -32,7 +32,7 @@ describe Oystercard do
     end
 
     it 'should have an empty list of journeys by default' do
-      expect(subject.log).to eq Array.new
+      expect(subject.log).to eq
     end
   end
 
