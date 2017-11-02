@@ -12,7 +12,7 @@ class JourneyLog
   end
 
   def start(station)
-    charge = fare(entry_station, nil) 
+    charge = fare(entry_station, nil)
     @entry_station = station
     charge
   end
@@ -24,20 +24,24 @@ class JourneyLog
   end
 
   def fare(entry_station, exit_station)
-    commit(entry_station, exit_station)
-    completed_journey? ? 0 : most_recent_fare
+    if no_fare_with?(exit_station)
+      0
+    else
+      commit(entry_station, exit_station)
+      most_recent_fare
+    end
   end
 
   private
 
   def commit(entry_station, exit_station)
-    unless completed_journey?
-      log << @journey_class.new(entry_station, exit_station) 
+    unless no_fare_with? exit_station
+      log << @journey_class.new(entry_station, exit_station)
     end
   end
 
-  def completed_journey?
-    entry_station.nil?
+  def no_fare_with?(station)
+    entry_station.nil? && station.nil?
   end
 
   def most_recent_fare
